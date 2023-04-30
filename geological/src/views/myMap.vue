@@ -76,7 +76,7 @@
 //import Vue from "vue";
 import axios from "axios";
 import AMap from "AMap"; // 引入高德地图
-import { pointsData,highdata } from "../assets/data/pointsData";
+import { pointsData,highdata,timedata } from "../assets/data/pointsData";
 import { en2cn, cn2en } from "../assets/data/cn&enConversion";
 
 export default {
@@ -84,6 +84,7 @@ export default {
   data() {
     return {
       highdata:highdata,
+      timedata:timedata,
       pointsData: pointsData,
       map: {},
       pointDataKeys: [],
@@ -108,9 +109,9 @@ export default {
    mounted() {
       this.init();
      //this.fetchData();
-     /* setInterval(() => {
+     setInterval(() => {
       location.reload()
-    }, 0.5 * 40 * 1000) // 每 20 秒刷新一次 */
+    }, 0.5 * 40 * 1000) // 每 20 秒刷新一次
    },
    /* beforeDestroy() {
     // 将items数组保存到本地存储
@@ -152,22 +153,27 @@ export default {
       //传的参数类型为object
       //console.log(typeof newData)
      // console.log(this.pointsData)
-      console.log("response.data-->"+newData.high)
+      //console.log("response.data-->"+newData.high)
       //console.log(JSON.stringify(newData))
 
       //const key=Object.keys(newData)
-      console.log(newData.equipment)
-      console.log("newData="+newData)
+      //console.log(newData.equipment)
+      //console.log("newData="+newData)
       console.log(newData)
       //console.log(typeof pointsData[0].picture)
+
+      //这里是提取浏览器缓存数据，因为每次刷新都会重置，想要添加新的数据只能先拿出来
       const existingData = JSON.parse(localStorage.getItem('highdata')) || [];
+      const existTime=JSON.parse(localStorage.getItem('timedata')) || [];
       // 遍历 myArray 数组，找到需要修改的元素
       for (let i = 0; i < pointsData.length; i++) {
         //不知道发生了什么，一觉醒来就不能使用newData[key].equipment，可能是只获取了一组数据
         if (pointsData[i].name === newData.equipment) {
           pointsData[i].high = newData.high // 将新数据赋值给数组中对应的元素
           pointsData[i].update=newData.time
+          //将水位，时间数据放入模块存储
           existingData.push(newData.high)
+          existTime.push(newData.time)
           if(parseFloat(newData.high)<1){
             pointsData[i].isDangerous=true
             pointsData[i].isWarning=false
@@ -175,10 +181,13 @@ export default {
           console.log("highdata=")
           console.log(existingData)
           this.highdata=highdata
+          this.timedata=timedata
           //console.log(pointsData)
           //console.log("pointsData[i].picture-->"+pointsData[i].picture)
           console.log("success")
+          //存入缓存
           localStorage.setItem('highdata', JSON.stringify(existingData))
+          localStorage.setItem('timedata', JSON.stringify(existTime))
           break // 找到要修改的元素后跳出循环
         }
       }

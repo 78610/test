@@ -1,109 +1,108 @@
 <template>
-  <div class="management">
-    <el-table
-      border
-      height="100%"
-      style="width:100%"
-      :data="tableData"
-      :row-class-name="tableRowClassName"
-    >
-      <el-table-column prop="id" label="ID"></el-table-column>
-      <el-table-column prop="isDangerous" label="IsDangerous"></el-table-column>
-      <el-table-column prop="high" label="High">
-        <!-- <template slot-scope="scope">
-          <el-popover placement="top-start" title trigger="hover">
-            <img
-              :src="scope.row.picture"
-              alt
-              style="width: 150px;height: 150px"
-            />
-            <img
-              slot="reference"
-              :src="scope.row.picture"
-              style="width: 30px;height: 30px"
-            />
-          </el-popover>
-        </template> -->
-      </el-table-column>
-      <el-table-column
-        prop="dangerLevel"
-        label="DangerLevel"
-        sortable
-      ></el-table-column>
-      <el-table-column prop="color" label="Color"></el-table-column>
-      <el-table-column prop="name" label="Name"></el-table-column>
-      <el-table-column prop="about" label="About" width="300"></el-table-column>
-      <el-table-column prop="update" label="Update"></el-table-column>
-      <el-table-column prop="latitude" label="Latitude"></el-table-column>
-      <el-table-column prop="longitude" label="Longitude"></el-table-column>
-    </el-table>
-     <button v-on:click="handleClick()">清除缓存</button>
+  <div>
+    <div ref="chartContainer" style="width: 100%; height: 400px;"></div>
   </div>
-</template>
-
-<script>
-import { pointsData } from "../assets/data/pointsData";
-//import Parent from "./myMap.vue"
-export default {
   
-  data() {
-    return {
-      tableData: pointsData,
-    };
+</template>
+<script>
+
+
+//import { pointsData } from "../assets/data/pointsData";
+import echarts from 'echarts'
+
+export default {
+  /* components:{
+    pointsData
+  }, */
+  data(){
+    return{
+      chartData:[],
+      timeData:[],
+    }
   },
-  mounted: function() {
-    var i = 0;
-    for (i; i < this.tableData.length; i++) {
-      this.tableData[i].isDangerous = this.tableData[i].isDangerous + "";
-      console.log(this.tableData[i].isDangerous);
+  mounted() {
+    const localData = localStorage.getItem('highdata')
+    const time = localStorage.getItem('timedata')
+    if (localData) {
+      this.chartData = JSON.parse(localData)
+      this.chartData=this.chartData.slice(-7)
+    }
+    if(time){
+      this.timeData=JSON.parse(time)
+      this.timeData=this.timeData.slice(-7)
+    }
+    //console.log(localData.length)
+    //console.log(localData)
+    this.renderChart()
+  },
+  watch: {
+    chartData: function(newChartData) {
+      // 将新数据保存到本地存储
+      //localStorage.setItem('chartData', JSON.stringify(newChartData))
+      // 更新折线图
+      this.updateChart(newChartData)
     }
   },
   methods: {
-    handleClick() {
-      console.log('清除缓存'),
-      localStorage.clear()
-    },
-    tableRowClassName({ row }) {
-      if (row.dangerLevel >= 5) {
-        return "warning-row";
-      } else if (row.dangerLevel <= 4) {
-        return "success-row";
-      }
-      return "";
+    /* handleChartClick(params) {
+      console.log("chartData=...")
+      console.log(this.chartData)
+      const dataIndex = params.dataIndex
+      const value = this.chartData.data[dataIndex]
+      alert(`第 ${dataIndex + 1} 天的销量为 ${value}`)
+    }, */
+    renderChart() {
+      const chartContainer = this.$refs.chartContainer
+
+      // 初始化 echarts 实例
+      const chart = echarts.init(chartContainer)
+
+      // 设置折线图配置项
+      const option = {
+        xAxis: {
+          type: 'category',
+          name:'设备监测时间',
+          data: this.timeData
+        },
+        yAxis: {
+          type: 'value',
+          name:'水位/m'
+        },
+        tooltip: {
+    trigger: 'axis',
+    axisPointer: {
+      type: 'cross'
     }
+  },
+        series: [{
+          data: this.chartData,
+          type: 'line'
+        }],
+        label: {
+      show: false,
+      position: 'top', // 文本标签显示在数据点上方
+      //position: 'insideRight', // 设置标签在数据点的右侧显示
+      formatter: '水位/m' // 设置只显示纵轴数据
+    },
+    emphasis: {
+      label: {
+        show: true // 点击时显示文本标签
+      }
+    },
+      };
 
-    // tableRowClassName({ row, rowIndex }) {
-    //   console.log(row);
-    //   if (rowIndex === 1) {
-    //     return "warning-row";
-    //   } else if (rowIndex === 3) {
-    //     return "success-row";
-    //   }
-    //   return "";
-    // }
+      // 使用刚指定的配置项和数据显示图表。
+      chart.setOption(option);
+    },
+    updateChart(newData) {
+      const chart = echarts.getInstanceByDom(this.$refs.chartContainer)
+      chart.setOption({
+        series: [{
+          data: newData,
+          type: 'line'
+        }]
+      })
+    }
   }
-  
-};
+}
 </script>
-
-<style lang="less" scoped>
-.el-table /deep/ .warning-row {
-  background: oldlace;
-}
-
-.el-table /deep/ .success-row {
-  background: #f0f9eb;
-}
-
-.management {
-  box-sizing: border-box;
-  padding-top: 61px !important;
-  position: absolute;
-  top: 0px;
-
-  left: 50%;
-  transform: translateX(-50%);
-  height: 100%;
-  width: 100%;
-}
-</style>

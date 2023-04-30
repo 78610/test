@@ -37,6 +37,7 @@
       <el-table-column prop="latitude" label="Latitude"></el-table-column>
       <el-table-column prop="longitude" label="Longitude"></el-table-column>
     </el-table>
+     <button v-on:click="handleClick()">清除缓存</button>
   </div>
 </template>
 
@@ -58,6 +59,10 @@ export default {
     }
   },
   methods: {
+    handleClick() {
+      console.log('清除缓存'),
+      localStorage.clear()
+    },
     tableRowClassName({ row }) {
       if (row.dangerLevel >= 5) {
         return "warning-row";
