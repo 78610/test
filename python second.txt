@@ -1,0 +1,95 @@
+import RPi.GPIO as GPIO
+import serial
+import time
+import binascii
+import socket
+
+GPIO.setmode(GPIO.BCM)
+
+s = serial.Serial("/dev/ttyAMA0",9600)
+def client(message):
+    print("客户端启动")
+    # 1 创建套接字
+    c = socket.socket()
+    port = 1026
+    host = '192.168.137.246'
+
+    # 2 连接地址和端口
+    c.connect((host, port))
+        
+
+    # 3 连接成功后，发送/接收数据
+    print("客户端发送：")
+    #a = input()
+    a=message
+    #while True:
+    if a == None:
+        c.close()
+        print("False")
+        return False
+        #exit(0)
+    else:
+        c.send(a.encode('utf-8'))
+        #data = c.recv(1024)
+        #print(f"客户端收到：{data}")
+        print("True")
+        return True
+#冒泡排序，将数组数据排序
+def bubble(list):
+    for i in range(len(list)):
+        for j in range(len(list)-i-1):
+            if list[j]>list[j+1]:
+                list[j],list[j+1]=list[j+1],list[j]
+
+#滤波数据
+def receive():
+    i=0
+    number=[]
+    while i<5:
+      try:
+        send_data = bytes.fromhex('80 04 00 02 00 01 8E 1B')
+        s.write(send_data)
+        data=str(binascii.b2a_hex(s.read(7)))[8:12]
+        rece_data_High_16 = data[0:2]   # 数据高16位
+        rece_data_High_8  = data[2:4]   # 数据高8位
+        print(str("rece_data_High_16 :{}".format(rece_data_High_16)))   # 数据高16位的第1位
+        print(str("rece_data_High_8 :{}".format(rece_data_High_8)))     # 数据高8位的第1位
+        rece_data_High_16_to_int = int(rece_data_High_16,16)
+        rece_data_High_8_to_int  = int(rece_data_High_8,16)
+        m = (rece_data_High_16_to_int * 256) + (rece_data_High_8_to_int)
+        m=m*0.001
+        m=round(m,4)
+        print("河面深度：{}".format(m) + "m")
+        number.append(m)
+
+        #打印数组
+        print(number)
+        i+=1
+        time.sleep(5)
+      except ValueError:
+        print("传感器异常，请检查！！！")
+    bubble(number)
+    j=1
+    sum=0
+    while j<4:
+        sum+=number[j]
+        j+=1
+    result=sum/3
+    result=round(result,3)
+    return result
+
+def main():
+        while True:
+            m=receive()
+            mes=str(m)
+            print("河面深度：{}".format(m) + "m")
+            if client(mes):
+                print("数据输出成功")
+            else:
+                print("数据输出失败")
+
+            s.flushOutput()
+            time.sleep(5)
+                
+if __name__=='__main__':
+    main()
